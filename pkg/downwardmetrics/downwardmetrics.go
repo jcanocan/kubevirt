@@ -31,3 +31,10 @@ func HasDownwardMetricDisk(vmi *v1.VirtualMachineInstance) bool {
 	}
 	return false
 }
+
+func HasDownwardMetricSerial(vmi *v1.VirtualMachineInstance) bool {
+	if vmi.Spec.Domain.Devices.DownwardMetrics != nil {
+		return true
+	}
+	return false
+}

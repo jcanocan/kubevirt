@@ -221,6 +221,32 @@ func ValidateVirtualMachineInstanceSpec(field *k8sfield.Path, spec *v1.VirtualMa
 	causes = append(causes, validateVSOCK(field, spec, config)...)
 	causes = append(causes, validatePersistentReservation(field, spec, config)...)
 	causes = append(causes, validatePersistentState(field, spec, config)...)
+	causes = append(causes, validateDownwardMetrics(field, spec, config)...)
+
+	return causes
+}
+
+func validateDownwardMetrics(field *k8sfield.Path, spec *v1.VirtualMachineInstanceSpec, config *virtconfig.ClusterConfig) []metav1.StatusCause {
+	var causes []metav1.StatusCause
+
+	//check if serial and feature gate is enabled
+	if spec.Domain.Devices.DownwardMetrics != nil && !config.DownwardMetricsEnabled() {
+		causes = append(causes, metav1.StatusCause{
+			Type:    metav1.CauseTypeFieldValueInvalid,
+			Message: "downwardMetrics virtio serial is not allowed: DownwardMetrics feature gate is not enabled",
+			Field:   field.Child("downwardMetrics").String(),
+		})
+	}
+	//check if both volumes and virtio serial are enabled
+	for idx, volume := range spec.Volumes {
+		if spec.Domain.Devices.DownwardMetrics != nil && volume.DownwardMetrics != nil {
+			causes = append(causes, metav1.StatusCause{
+				Type:    metav1.CauseTypeFieldManagerConflict,
+				Message: fmt.Sprintf("%s downwardMetrics virtio serial and volume is not supported, use just one", field.Index(idx).String()),
+				Field:   field.Index(idx).String(),
+			})
+		}
+	}
 
 	return causes
 }

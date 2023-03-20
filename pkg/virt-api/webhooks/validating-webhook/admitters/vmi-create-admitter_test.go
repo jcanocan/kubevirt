@@ -3314,6 +3314,45 @@ var _ = Describe("Validating VMICreate Admitter", func() {
 			})
 		})
 	})
+	Context("with downwardmetrics virtio serial", func() {
+		It("should accept a single virtio serial", func() {
+			enableFeatureGate(virtconfig.DownwardMetricsFeatureGate)
+			vmi := api.NewMinimalVMI("testvmi")
+
+			vmi.Spec.Domain.Devices.DownwardMetrics = &v1.DownwardMetrics{}
+
+			causes := validateDownwardMetrics(k8sfield.NewPath("fake"), &vmi.Spec, config)
+			Expect(causes).To(BeEmpty())
+		})
+
+		It("should reject if feature gate is not enabled", func() {
+			vmi := api.NewMinimalVMI("testvmi")
+
+			vmi.Spec.Domain.Devices.DownwardMetrics = &v1.DownwardMetrics{}
+
+			causes := validateDownwardMetrics(k8sfield.NewPath("fake"), &vmi.Spec, config)
+			Expect(causes).To(HaveLen(1))
+			Expect(causes[0].Message).To(ContainSubstring("downwardMetrics virtio serial is not allowed: DownwardMetrics feature gate is not enabled"))
+		})
+
+		It("should reject if both volume and virtio serial is enabled", func() {
+			enableFeatureGate(virtconfig.DownwardMetricsFeatureGate)
+			vmi := api.NewMinimalVMI("testvmi")
+
+			vmi.Spec.Volumes = append(vmi.Spec.Volumes, v1.Volume{
+				Name: "testDownwardMetrics",
+				VolumeSource: v1.VolumeSource{
+					DownwardMetrics: &v1.DownwardMetricsVolumeSource{},
+				},
+			})
+			vmi.Spec.Domain.Devices.DownwardMetrics = &v1.DownwardMetrics{}
+
+			causes := validateDownwardMetrics(k8sfield.NewPath("fake"), &vmi.Spec, config)
+
+			Expect(causes).To(HaveLen(1))
+			Expect(causes[0].Message).To(ContainSubstring("fake[0] downwardMetrics virtio serial and volume is not supported, use just one"))
+		})
+	})
 
 	Context("with volume", func() {
 		It("should accept a single downwardmetrics volume", func() {

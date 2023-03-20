@@ -957,9 +957,10 @@ type Timer struct {
 //BEGIN Channel --------------------
 
 type Channel struct {
-	Type   string         `xml:"type,attr"`
-	Source *ChannelSource `xml:"source,omitempty"`
-	Target *ChannelTarget `xml:"target,omitempty"`
+	Type    string          `xml:"type,attr"`
+	Source  *ChannelSource  `xml:"source,omitempty"`
+	Target  *ChannelTarget  `xml:"target,omitempty"`
+	Address *ChannelAddress `xml:"address,omitempty"`
 }
 
 type ChannelTarget struct {
@@ -973,6 +974,13 @@ type ChannelTarget struct {
 type ChannelSource struct {
 	Mode string `xml:"mode,attr"`
 	Path string `xml:"path,attr"`
+}
+
+type ChannelAddress struct {
+	Type       string `xml:"type,attr"`
+	Controller uint   `xml:"controller,attr,omitempty"`
+	Bus        uint   `xml:"bus,attr,omitempty"`
+	Port       uint   `xml:"port,attr,omitempty"`
 }
 
 //END Channel --------------------
