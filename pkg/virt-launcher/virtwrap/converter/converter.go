@@ -1241,6 +1241,9 @@ func Convert_v1_VirtualMachineInstance_To_api_Domain(vmi *v1.VirtualMachineInsta
 	newChannel := Add_Agent_To_api_Channel()
 	domain.Spec.Devices.Channels = append(domain.Spec.Devices.Channels, newChannel)
 
+	//Handle downwardMetrics
+	domain.Spec.Devices.Channels = append(domain.Spec.Devices.Channels, convertDownwardMetricsChannel(vmi.Spec.Domain.Devices.DownwardMetrics)...)
+
 	domain.Spec.SysInfo = &api.SysInfo{}
 	if vmi.Spec.Domain.Firmware != nil {
 		domain.Spec.SysInfo.System = []api.Entry{

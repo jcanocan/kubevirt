@@ -30,6 +30,8 @@ import (
 	"time"
 	"unicode"
 
+	"kubevirt.io/kubevirt/pkg/config"
+
 	"kubevirt.io/kubevirt/tests/decorators"
 
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -286,6 +288,30 @@ var _ = Describe("[sig-compute]Configurations", decorators.SigCompute, func() {
 				64,
 			),
 		)
+
+		FIt("with downwardMetrics virtio-serial", func() {
+
+			vmi := libvmi.New(
+				libvmi.WithDownwardMetricsChannel(),
+				libvmi.WithResourceMemory("1Gi"),
+				libvmi.WithInterface(libvmi.InterfaceDeviceWithMasqueradeBinding()),
+				libvmi.WithNetwork(v1.DefaultPodNetwork()),
+			)
+
+			vmi = tests.RunVMIAndExpectLaunch(vmi, 60)
+			libwait.WaitForSuccessfulVMIStart(vmi)
+			expectedXML := fmt.Sprintf("<source mode='bind' path='%s'/>", config.DownwardMetricDisk)
+
+			domXml, err := tests.GetRunningVirtualMachineInstanceDomainXML(virtClient, vmi)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(domXml).To(ContainSubstring(expectedXML))
+
+			expectedXML = fmt.Sprintf("<target type='virtio' name='org.github.vhostmd.1")
+			Expect(domXml).To(ContainSubstring(expectedXML))
+
+			expectedXML = fmt.Sprintf("<address type='virtio-serial' controller='0' bus='0' port='1'/>")
+			Expect(domXml).To(ContainSubstring(expectedXML))
+		})
 
 		Context("[Serial][rfe_id:2065][crit:medium][vendor:cnv-qe@redhat.com][level:component]with 3 CPU cores", Serial, func() {
 			var availableNumberOfCPUs int

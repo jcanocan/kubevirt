@@ -27,6 +27,7 @@ import (
 
 	v1 "kubevirt.io/api/core/v1"
 
+	"kubevirt.io/kubevirt/pkg/downwardmetrics"
 	"kubevirt.io/kubevirt/pkg/pointer"
 )
 
@@ -129,6 +130,15 @@ func WithLimitCPU(value string) Option {
 			vmi.Spec.Domain.Resources.Limits = k8sv1.ResourceList{}
 		}
 		vmi.Spec.Domain.Resources.Limits[k8sv1.ResourceCPU] = resource.MustParse(value)
+	}
+}
+
+func WithDownwardMetricsChannel() Option {
+
+	return func(vmi *v1.VirtualMachineInstance) {
+		if !downwardmetrics.HasDownwardMetricSerial(vmi) {
+			vmi.Spec.Domain.Devices.DownwardMetrics = &v1.DownwardMetrics{}
+		}
 	}
 }
 

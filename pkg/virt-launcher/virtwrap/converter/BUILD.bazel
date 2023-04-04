@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "converter.go",
+        "downwardmetrics.go",
         "generated_mock_converter.go",
         "network.go",
         "pci-placement.go",
