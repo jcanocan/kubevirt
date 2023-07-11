@@ -111,6 +111,10 @@ type netstat interface {
 	CachePodInterfaceVolatileData(vmi *v1.VirtualMachineInstance, ifaceName string, data *netcache.PodIfaceCacheData)
 }
 
+type genericManager interface {
+	Run(stopCh chan struct{})
+}
+
 const (
 	failedDetectIsolationFmt              = "failed to detect isolation for launcher pod: %v"
 	unableCreateVirtLauncherConnectionFmt = "unable to create virt-launcher client connection: %v"
@@ -190,6 +194,7 @@ func NewController(
 	clusterConfig *virtconfig.ClusterConfig,
 	podIsolationDetector isolation.PodIsolationDetector,
 	migrationProxy migrationproxy.ProxyManager,
+	downwardMetricsManager genericManager,
 	capabilities *nodelabellerapi.Capabilities,
 	hostCpuModel string,
 ) (*VirtualMachineController, error) {
@@ -263,6 +268,8 @@ func NewController(
 	c.netConf = netsetup.NewNetConf()
 	c.netStat = netsetup.NewNetStat()
 
+	c.downwardMetricsManager = downwardMetricsManager
+
 	c.domainNotifyPipes = make(map[string]string)
 
 	permissions := "rw"
@@ -311,6 +318,7 @@ type VirtualMachineController struct {
 	hotplugVolumeMounter     hotplug_volume.VolumeMounter
 	clusterConfig            *virtconfig.ClusterConfig
 	sriovHotplugExecutorPool *executor.RateLimitedExecutorPool
+	downwardMetricsManager   genericManager
 
 	netConf netconf
 	netStat netstat
@@ -1514,6 +1522,8 @@ func (c *VirtualMachineController) Run(threadiness int, stopCh chan struct{}) {
 	log.Log.Info("Starting virt-handler controller.")
 
 	go c.deviceManagerController.Run(stopCh)
+
+	go c.downwardMetricsManager.Run(stopCh)
 
 	cache.WaitForCacheSync(stopCh, c.domainInformer.HasSynced, c.vmiSourceInformer.HasSynced, c.vmiTargetInformer.HasSynced, c.gracefulShutdownInformer.HasSynced)
 
