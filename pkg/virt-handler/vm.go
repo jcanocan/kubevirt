@@ -93,6 +93,7 @@ import (
 	virtconfig "kubevirt.io/kubevirt/pkg/virt-config"
 	virtcache "kubevirt.io/kubevirt/pkg/virt-handler/cache"
 	cmdclient "kubevirt.io/kubevirt/pkg/virt-handler/cmd-client"
+	dmetricsmanager "kubevirt.io/kubevirt/pkg/virt-handler/dmetrics-manager"
 	"kubevirt.io/kubevirt/pkg/virt-handler/isolation"
 	migrationproxy "kubevirt.io/kubevirt/pkg/virt-handler/migration-proxy"
 	"kubevirt.io/kubevirt/pkg/virt-launcher/virtwrap/api"
@@ -263,6 +264,12 @@ func NewController(
 	c.netConf = netsetup.NewNetConf()
 	c.netStat = netsetup.NewNetStat()
 
+	downwardMetricsManager, err := dmetricsmanager.NewDownwardMetricsManager(host, virtShareDir, vmiSourceInformer)
+	if err != nil {
+		return nil, err
+	}
+	c.downwardMetricsManager = downwardMetricsManager
+
 	c.domainNotifyPipes = make(map[string]string)
 
 	permissions := "rw"
@@ -311,6 +318,7 @@ type VirtualMachineController struct {
 	hotplugVolumeMounter     hotplug_volume.VolumeMounter
 	clusterConfig            *virtconfig.ClusterConfig
 	sriovHotplugExecutorPool *executor.RateLimitedExecutorPool
+	downwardMetricsManager   *dmetricsmanager.DownwardMetricsManager
 
 	netConf netconf
 	netStat netstat
@@ -1514,6 +1522,8 @@ func (c *VirtualMachineController) Run(threadiness int, stopCh chan struct{}) {
 	log.Log.Info("Starting virt-handler controller.")
 
 	go c.deviceManagerController.Run(stopCh)
+
+	go c.downwardMetricsManager.Run(stopCh)
 
 	cache.WaitForCacheSync(stopCh, c.domainInformer.HasSynced, c.vmiSourceInformer.HasSynced, c.vmiTargetInformer.HasSynced, c.gracefulShutdownInformer.HasSynced)
 
