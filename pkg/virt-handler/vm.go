@@ -1492,10 +1492,6 @@ func (d *VirtualMachineController) calculateLiveMigrationCondition(vmi *v1.Virtu
 		return newNonMigratableCondition(err.Error(), v1.VirtualMachineInstanceReasonCPUModeNotMigratable), isBlockMigration
 	}
 
-	if util.IsVMIVirtiofsEnabled(vmi) {
-		return newNonMigratableCondition("VMI uses virtiofs", v1.VirtualMachineInstanceReasonVirtIOFSNotMigratable), isBlockMigration
-	}
-
 	if vmiContainsPCIHostDevice(vmi) {
 		return newNonMigratableCondition("VMI uses a PCI host devices", v1.VirtualMachineInstanceReasonHostDeviceNotMigratable), isBlockMigration
 	}
@@ -2451,7 +2447,23 @@ func (d *VirtualMachineController) checkVolumesForMigration(vmi *v1.VirtualMachi
 			if !shared {
 				return true, fmt.Errorf("cannot migrate VMI with non-shared HostDisk")
 			}
+
 		} else {
+
+			isFilesystem := false
+			for _, filesystem := range vmi.Spec.Domain.Devices.Filesystems {
+				if filesystem.Name == volume.Name {
+					isFilesystem = true
+					break
+				}
+
+			}
+
+			if isFilesystem {
+				log.Log.Object(vmi).Infof("Volume %s is shared with virtiofs, allow live migration", volume.Name)
+				continue
+			}
+
 			isVolumeUsedByReadOnlyDisk := false
 			for _, disk := range vmi.Spec.Domain.Devices.Disks {
 				if virtutil.IsReadOnlyDisk(&disk) && disk.Name == volume.Name {

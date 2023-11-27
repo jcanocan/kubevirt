@@ -165,6 +165,15 @@ pkg_tar(
     owner = "0.0",
 )
 
+pkg_tar(
+    name = "custom-virtiofsd-build",
+    srcs = ["@custom-virtiofsd//file"],
+    mode = "0755",
+    owner = "0.0",
+    package_dir = "/usr/libexec",
+    visibility = ["//visibility:public"],
+)
+
 container_image(
     name = "version-container",
     directory = "/",
@@ -182,6 +191,7 @@ container_image(
             ":passwd-tar",
             ":nsswitch-tar",
             ":qemu-kvm-modules-dir-tar",
+	    ":custom-virtiofsd-build",
             "//rpm:launcherbase_x86_64",
         ],
     }),

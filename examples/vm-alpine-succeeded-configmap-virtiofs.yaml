@@ -1,0 +1,57 @@
+---
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  labels:
+    kubevirt.io/vm: vm-configmap-virtiofs
+  name: vm-configmap-virtiofs
+spec:
+  dataVolumeTemplates:
+  - metadata:
+      creationTimestamp: null
+      name: alpine-dv
+    spec:
+      pvc:
+        accessModes:
+        - ReadWriteMany
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: rook-ceph-block
+        volumeMode: Block
+      source:
+        registry:
+          url: docker://registry:5000/kubevirt/alpine-container-disk-demo:devel
+  running: false
+  template:
+    metadata:
+      labels:
+        kubevirt.io/vm: vm-configmap-virtiofs
+    spec:
+      domain:
+        devices:
+          filesystems:
+            - name: cfg-virtiofs
+              virtiofs: {}
+          disks:
+          - disk:
+              bus: virtio
+            name: datavolumedisk1
+          interfaces:
+            - name: default
+              masquerade: {}
+        resources:
+          requests:
+            memory: 128Mi
+      terminationGracePeriodSeconds: 0
+      volumes:
+      - dataVolume:
+          name: alpine-dv
+        name: datavolumedisk1
+      - configMap:
+          name: cfg-test-1
+        name: cfg-virtiofs
+      networks:
+        - name: default
+          pod: {}
+      

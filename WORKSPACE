@@ -42,6 +42,17 @@ rules_proto_dependencies()
 
 rules_proto_toolchains()
 
+http_file(
+    name = "custom-virtiofsd",
+    downloaded_file_path = "virtiofsd",
+    sha256 = "656c8c9644383793d8a69d7981331c2dd2b0261c4028e6299fd1634c1349ea0a",
+    urls = [
+	    "file:///root/go/src/kubevirt.io/kubevirt/build/virtiofsd",
+    ],
+)
+
+
+
 http_archive(
     name = "io_bazel_rules_go",
     sha256 = "099a9fb96a376ccbbb7d291ed4ecbdfd42f6bc822ab77ae6f1b5cb9e914e94fa",
@@ -370,8 +381,8 @@ http_archive(
 # Get container-disk-v1alpha RPM's
 http_file(
     name = "qemu-img",
-    sha256 = "669250ad47aad5939cf4d1b88036fd95a94845d8e0bbdb05e933f3d2fe262fea",
-    urls = ["https://storage.googleapis.com/builddeps/669250ad47aad5939cf4d1b88036fd95a94845d8e0bbdb05e933f3d2fe262fea"],
+    sha256 = "7b3f8b6d5995eecbaaeadf7e7f2b450579610016eba8c4d2ed30456c1f7cc21e",
+    urls = ["file:///root/go/src/kubevirt.io/kubevirt/build/x86_64/qemu-img-8.1.0-4.el9.x86_64.rpm"],
 )
 
 # some repos which are not part of go_rules anymore
@@ -3179,10 +3190,9 @@ rpm(
 
 rpm(
     name = "libvirt-client-0__9.5.0-6.el9.x86_64",
-    sha256 = "3dbb02da7f4a3343b9085f2ffa455779ae3d8e19b4e6423222eb60c65b48a51b",
+    sha256 = "7620b443febcfe49fd099185b418e3fbfd33b7b8bbd5f29b03146fa8e5d69f45",
     urls = [
-        "http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/libvirt-client-9.5.0-6.el9.x86_64.rpm",
-        "https://storage.googleapis.com/builddeps/3dbb02da7f4a3343b9085f2ffa455779ae3d8e19b4e6423222eb60c65b48a51b",
+        "file:///root/go/src/kubevirt.io/kubevirt/build/x86_64/libvirt-client-9.5.0-6.el9.x86_64.rpm",
     ],
 )
 
@@ -3197,10 +3207,9 @@ rpm(
 
 rpm(
     name = "libvirt-daemon-common-0__9.5.0-6.el9.x86_64",
-    sha256 = "506af6eaa7968688ad77e9a37f1bd766cb89b28a79d3feca3ef6cce9f4bb3c77",
+    sha256 = "7747c9af30db37397e04a1e555b26b0a801dad13ffb8758cf6f5a3187b898e15",
     urls = [
-        "http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/libvirt-daemon-common-9.5.0-6.el9.x86_64.rpm",
-        "https://storage.googleapis.com/builddeps/506af6eaa7968688ad77e9a37f1bd766cb89b28a79d3feca3ef6cce9f4bb3c77",
+        "file:///root/go/src/kubevirt.io/kubevirt/build/x86_64/libvirt-daemon-common-9.5.0-6.el9.x86_64.rpm",
     ],
 )
 
@@ -3215,28 +3224,25 @@ rpm(
 
 rpm(
     name = "libvirt-daemon-driver-qemu-0__9.5.0-6.el9.x86_64",
-    sha256 = "de16e915037b7295ba20469e4301a6d719d1250e6dd46ba851afac7cb8aef746",
+    sha256 = "639face901148e71d94bc6076465e700e79769d829a44fb15a3b593143a28975",
     urls = [
-        "http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/libvirt-daemon-driver-qemu-9.5.0-6.el9.x86_64.rpm",
-        "https://storage.googleapis.com/builddeps/de16e915037b7295ba20469e4301a6d719d1250e6dd46ba851afac7cb8aef746",
+        "file:///root/go/src/kubevirt.io/kubevirt/build/x86_64/libvirt-daemon-driver-qemu-9.5.0-6.el9.x86_64.rpm",
     ],
 )
 
 rpm(
     name = "libvirt-daemon-driver-secret-0__9.5.0-6.el9.x86_64",
-    sha256 = "813cd25b5015d7879de39443a5f0795243f53f444ccd281f3393b940c276548a",
+    sha256 = "4a9cdfa7c59ff40e8fb61feab69ccb4066987078ce6e23fb7a5f90bd9f2989ef",
     urls = [
-        "http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/libvirt-daemon-driver-secret-9.5.0-6.el9.x86_64.rpm",
-        "https://storage.googleapis.com/builddeps/813cd25b5015d7879de39443a5f0795243f53f444ccd281f3393b940c276548a",
+        "file:///root/go/src/kubevirt.io/kubevirt/build/x86_64/libvirt-daemon-driver-secret-9.5.0-6.el9.x86_64.rpm",
     ],
 )
 
 rpm(
     name = "libvirt-daemon-driver-storage-core-0__9.5.0-6.el9.x86_64",
-    sha256 = "e4d877ded56a7a3624f278ed55482d5de68194076d49b3a65060ea87d686ae54",
+    sha256 = "e8219b880b2a790ff1c90c7d249bc72d898b74a6425818ff323156ad09a602a4",
     urls = [
-        "http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/libvirt-daemon-driver-storage-core-9.5.0-6.el9.x86_64.rpm",
-        "https://storage.googleapis.com/builddeps/e4d877ded56a7a3624f278ed55482d5de68194076d49b3a65060ea87d686ae54",
+        "file:///root/go/src/kubevirt.io/kubevirt/build/x86_64/libvirt-daemon-driver-storage-core-9.5.0-6.el9.x86_64.rpm",
     ],
 )
 
@@ -3251,10 +3257,9 @@ rpm(
 
 rpm(
     name = "libvirt-daemon-log-0__9.5.0-6.el9.x86_64",
-    sha256 = "8ce3b735c02503d3093209a359ecf07e6de1da449338df3a1c8bc6d2d0cfedcc",
+    sha256 = "57a0983099c6b9152dba8ff326defc85205a4fc0112482463693e73f32f54382",
     urls = [
-        "http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/libvirt-daemon-log-9.5.0-6.el9.x86_64.rpm",
-        "https://storage.googleapis.com/builddeps/8ce3b735c02503d3093209a359ecf07e6de1da449338df3a1c8bc6d2d0cfedcc",
+        "file:///root/go/src/kubevirt.io/kubevirt/build/x86_64/libvirt-daemon-log-9.5.0-6.el9.x86_64.rpm",
     ],
 )
 
@@ -3269,10 +3274,9 @@ rpm(
 
 rpm(
     name = "libvirt-devel-0__9.5.0-6.el9.x86_64",
-    sha256 = "caca5fbbfabe75cf56e24343bf93596f78a91fa341eacb668b15b505245922e9",
+    sha256 = "e048e203c1a292b5a79197b08157bdba0e5a1f4fdca7b9379ae6ed30c36327af",
     urls = [
-        "http://mirror.stream.centos.org/9-stream/CRB/x86_64/os/Packages/libvirt-devel-9.5.0-6.el9.x86_64.rpm",
-        "https://storage.googleapis.com/builddeps/caca5fbbfabe75cf56e24343bf93596f78a91fa341eacb668b15b505245922e9",
+        "file:///root/go/src/kubevirt.io/kubevirt/build/x86_64/libvirt-devel-9.5.0-6.el9.x86_64.rpm",
     ],
 )
 
@@ -3287,10 +3291,9 @@ rpm(
 
 rpm(
     name = "libvirt-libs-0__9.5.0-6.el9.x86_64",
-    sha256 = "3c393f116df3ec9bc02a4dd2fe3d11b19a7188087693dce42f1582ad004a0f9d",
+    sha256 = "843260848ab88a0b9aaad17a63f83ea22986baf6d9fe873e31a9128919f0d083",
     urls = [
-        "http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/libvirt-libs-9.5.0-6.el9.x86_64.rpm",
-        "https://storage.googleapis.com/builddeps/3c393f116df3ec9bc02a4dd2fe3d11b19a7188087693dce42f1582ad004a0f9d",
+        "file:///root/go/src/kubevirt.io/kubevirt/build/x86_64/libvirt-libs-9.5.0-6.el9.x86_64.rpm",
     ],
 )
 
@@ -4348,11 +4351,10 @@ rpm(
 )
 
 rpm(
-    name = "qemu-img-17__8.0.0-13.el9.x86_64",
-    sha256 = "2f2b859728eaacf2034ec755f5b1b8a35650f46bb11ec8005d59400ceaefaefa",
+    name = "qemu-img-17__8.1.0-4.el9.x86_64",
+    sha256 = "7b3f8b6d5995eecbaaeadf7e7f2b450579610016eba8c4d2ed30456c1f7cc21e",
     urls = [
-        "http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/qemu-img-8.0.0-13.el9.x86_64.rpm",
-        "https://storage.googleapis.com/builddeps/2f2b859728eaacf2034ec755f5b1b8a35650f46bb11ec8005d59400ceaefaefa",
+        "file:///root/go/src/kubevirt.io/kubevirt/build/x86_64/qemu-img-8.1.0-4.el9.x86_64.rpm",
     ],
 )
 
@@ -4366,11 +4368,10 @@ rpm(
 )
 
 rpm(
-    name = "qemu-kvm-common-17__8.0.0-13.el9.x86_64",
-    sha256 = "a5c40e85781ccfc10c98975df9582651199893b513521c2b79b81a50f48b2127",
+    name = "qemu-kvm-common-17__8.1.0-4.el9.x86_64",
+    sha256 = "201530567acb16f112555e958aacba607bad8c3e24858d6448da42b4740353cb",
     urls = [
-        "http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/qemu-kvm-common-8.0.0-13.el9.x86_64.rpm",
-        "https://storage.googleapis.com/builddeps/a5c40e85781ccfc10c98975df9582651199893b513521c2b79b81a50f48b2127",
+        "file:///root/go/src/kubevirt.io/kubevirt/build/x86_64/qemu-kvm-common-8.1.0-4.el9.x86_64.rpm",
     ],
 )
 
@@ -4384,11 +4385,10 @@ rpm(
 )
 
 rpm(
-    name = "qemu-kvm-core-17__8.0.0-13.el9.x86_64",
-    sha256 = "7887c4bf06b08b057af9c96352c8007f952836a5940a9c8f8a76a9388fd7e338",
+    name = "qemu-kvm-core-17__8.1.0-4.el9.x86_64",
+    sha256 = "d0993fd72970e19a35309ac3b435338a4630b48a55d8e743901b84c49eb24100",
     urls = [
-        "http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/qemu-kvm-core-8.0.0-13.el9.x86_64.rpm",
-        "https://storage.googleapis.com/builddeps/7887c4bf06b08b057af9c96352c8007f952836a5940a9c8f8a76a9388fd7e338",
+        "file:///root/go/src/kubevirt.io/kubevirt/build/x86_64/qemu-kvm-core-8.1.0-4.el9.x86_64.rpm",
     ],
 )
 
@@ -4420,20 +4420,18 @@ rpm(
 )
 
 rpm(
-    name = "qemu-kvm-device-usb-host-17__8.0.0-13.el9.x86_64",
-    sha256 = "b42fbf8706a056377b87bd82c298d81261a89200e2768e90be84b3773491e59e",
+    name = "qemu-kvm-device-usb-host-17__8.1.0-4.el9.x86_64",
+    sha256 = "83ce974c81ab5172f8febc07547136f78e9b5a2f2419f413f06384bf80cf22da",
     urls = [
-        "http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/qemu-kvm-device-usb-host-8.0.0-13.el9.x86_64.rpm",
-        "https://storage.googleapis.com/builddeps/b42fbf8706a056377b87bd82c298d81261a89200e2768e90be84b3773491e59e",
+        "file:///root/go/src/kubevirt.io/kubevirt/build/x86_64/qemu-kvm-device-usb-host-8.1.0-4.el9.x86_64.rpm",
     ],
 )
 
 rpm(
-    name = "qemu-kvm-device-usb-redirect-17__8.0.0-13.el9.x86_64",
-    sha256 = "6de8f93673068504e702035ea064070663a3c8e7e91366e9b39a4ca8c8829597",
+    name = "qemu-kvm-device-usb-redirect-17__8.1.0-4.el9.x86_64",
+    sha256 = "0895eb25f21f85aab9f8408fd4f367c5185714f7430a64775248d7db0b39fc84",
     urls = [
-        "http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/qemu-kvm-device-usb-redirect-8.0.0-13.el9.x86_64.rpm",
-        "https://storage.googleapis.com/builddeps/6de8f93673068504e702035ea064070663a3c8e7e91366e9b39a4ca8c8829597",
+        "file:///root/go/src/kubevirt.io/kubevirt/build/x86_64/qemu-kvm-device-usb-redirect-8.1.0-4.el9.x86_64.rpm",
     ],
 )
 
@@ -4447,11 +4445,10 @@ rpm(
 )
 
 rpm(
-    name = "qemu-pr-helper-17__8.1.0-3.el9.x86_64",
-    sha256 = "e5dc5ae97ec07f2a2914da2c8e36bfc6146fbf688b99be8d55224e489ea3ad46",
+    name = "qemu-pr-helper-17__8.1.0-4.el9.x86_64",
+    sha256 = "4ca78f866504b8eafdd1461f2b3903153cc0e06dbc7a5f3ab3c047be4f61f2f3",
     urls = [
-        "http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/qemu-pr-helper-8.1.0-3.el9.x86_64.rpm",
-        "https://storage.googleapis.com/builddeps/e5dc5ae97ec07f2a2914da2c8e36bfc6146fbf688b99be8d55224e489ea3ad46",
+        "file:///root/go/src/kubevirt.io/kubevirt/build/x86_64/qemu-pr-helper-8.1.0-4.el9.x86_64.rpm",
     ],
 )
 
