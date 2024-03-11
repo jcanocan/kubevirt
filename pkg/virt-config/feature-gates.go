@@ -38,7 +38,7 @@ const (
 	VMExportGate          = "VMExport"
 	HotplugVolumesGate    = "HotplugVolumes"
 	HostDiskGate          = "HostDisk"
-	VirtIOFSGate          = "ExperimentalVirtiofsSupport"
+	VirtIOFSGate          = "EnableVirtioFs"
 
 	DownwardMetricsFeatureGate = "DownwardMetrics"
 	Root                       = "Root"
@@ -160,7 +160,7 @@ func (config *ClusterConfig) HostDiskEnabled() bool {
 }
 
 func (config *ClusterConfig) VirtiofsEnabled() bool {
-	return config.isFeatureGateEnabled(VirtIOFSGate)
+	return config.isFeatureGateEnabled(VirtIOFSGate) || config.isFeatureGateEnabled(deprecation.VirtIOFSGate)
 }
 
 func (config *ClusterConfig) MacvtapEnabled() bool {

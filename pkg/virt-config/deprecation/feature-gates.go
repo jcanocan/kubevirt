@@ -34,13 +34,14 @@ const (
 )
 
 const (
-	LiveMigrationGate      = "LiveMigration"      // Deprecated
-	SRIOVLiveMigrationGate = "SRIOVLiveMigration" // Deprecated
-	CPUNodeDiscoveryGate   = "CPUNodeDiscovery"   // Deprecated
-	PasstGate              = "Passt"              // Deprecated
-	NonRoot                = "NonRoot"            // Deprecated
-	PSA                    = "PSA"                // Deprecated
-	MacvtapGate            = "Macvtap"            // Deprecated
+	LiveMigrationGate      = "LiveMigration"               // Deprecated
+	SRIOVLiveMigrationGate = "SRIOVLiveMigration"          // Deprecated
+	CPUNodeDiscoveryGate   = "CPUNodeDiscovery"            // Deprecated
+	PasstGate              = "Passt"                       // Deprecated
+	NonRoot                = "NonRoot"                     // Deprecated
+	PSA                    = "PSA"                         // Deprecated
+	MacvtapGate            = "Macvtap"                     // Deprecated
+	VirtIOFSGate           = "ExperimentalVirtiofsSupport" // Deprecated
 )
 
 type FeatureGate struct {
@@ -58,6 +59,7 @@ var featureGates = [...]FeatureGate{
 	{Name: CPUNodeDiscoveryGate, State: GA},
 	{Name: PasstGate, State: Deprecated, Message: passtDeprecationMessage, VmiSpecUsed: passtApiUsed},
 	{Name: MacvtapGate, State: Deprecated, Message: macvtapDeprecationMessage, VmiSpecUsed: macvtapApiUsed},
+	{Name: VirtIOFSGate, State: Deprecated, Message: virtioFsFeatureGateDeprecationMessage},
 }
 
 func init() {
