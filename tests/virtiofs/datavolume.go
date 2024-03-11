@@ -49,6 +49,7 @@ import (
 	"kubevirt.io/kubevirt/tests"
 	"kubevirt.io/kubevirt/tests/console"
 	cd "kubevirt.io/kubevirt/tests/containerdisk"
+	"kubevirt.io/kubevirt/tests/framework/checks"
 	. "kubevirt.io/kubevirt/tests/framework/matcher"
 	"kubevirt.io/kubevirt/tests/libdv"
 	"kubevirt.io/kubevirt/tests/libpod"
@@ -69,6 +70,7 @@ var _ = Describe("[sig-storage] virtiofs", decorators.SigStorage, func() {
 
 	BeforeEach(func() {
 		virtClient = kubevirt.Client()
+		checks.SkipTestIfNoFeatureGate(virtconfig.VirtIOFSGate)
 		vmi = nil
 	})
 
@@ -76,7 +78,7 @@ var _ = Describe("[sig-storage] virtiofs", decorators.SigStorage, func() {
 		pvc1 := "pvc-1"
 		pvc2 := "pvc-2"
 		createPVC := func(namespace, name string) {
-			sc, _ := libstorage.GetRWXFileSystemStorageClass()
+			sc, _ := libstorage.GetRWOFileSystemStorageClass()
 			pvc := libstorage.NewPVC(name, "1Gi", sc)
 			_, err = virtClient.CoreV1().PersistentVolumeClaims(namespace).Create(context.Background(), pvc, metav1.CreateOptions{})
 			ExpectWithOffset(1, err).NotTo(HaveOccurred())
@@ -84,9 +86,9 @@ var _ = Describe("[sig-storage] virtiofs", decorators.SigStorage, func() {
 
 		DescribeTable("[Serial] should be successfully started and accessible", Serial, func(namespace string) {
 			if namespace == testsuite.NamespacePrivileged {
-				tests.EnableFeatureGate(virtconfig.VirtIOFSGate)
+				tests.EnableFeatureGate(virtconfig.Root)
 			} else {
-				tests.DisableFeatureGate(virtconfig.VirtIOFSGate)
+				tests.DisableFeatureGate(virtconfig.Root)
 			}
 
 			createPVC(namespace, pvc1)
@@ -203,9 +205,9 @@ var _ = Describe("[sig-storage] virtiofs", decorators.SigStorage, func() {
 			}
 			tests.UpdateKubeVirtConfigValueAndWait(*config)
 			if namespace == testsuite.NamespacePrivileged {
-				tests.EnableFeatureGate(virtconfig.VirtIOFSGate)
+				tests.EnableFeatureGate(virtconfig.Root)
 			} else {
-				tests.DisableFeatureGate(virtconfig.VirtIOFSGate)
+				tests.DisableFeatureGate(virtconfig.Root)
 			}
 
 			pvcName := fmt.Sprintf("disk-%s", pvc)
@@ -293,9 +295,9 @@ var _ = Describe("[sig-storage] virtiofs", decorators.SigStorage, func() {
 
 		DescribeTable("[Serial] should be successfully started and virtiofs could be accessed", Serial, func(namespace string) {
 			if namespace == testsuite.NamespacePrivileged {
-				tests.EnableFeatureGate(virtconfig.VirtIOFSGate)
+				tests.EnableFeatureGate(virtconfig.Root)
 			} else {
-				tests.DisableFeatureGate(virtconfig.VirtIOFSGate)
+				tests.DisableFeatureGate(virtconfig.Root)
 			}
 
 			dataVolume := libdv.NewDataVolume(

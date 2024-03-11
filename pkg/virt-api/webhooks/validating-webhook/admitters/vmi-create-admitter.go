@@ -224,7 +224,19 @@ func ValidateVirtualMachineInstanceSpec(field *k8sfield.Path, spec *v1.VirtualMa
 	causes = append(causes, validatePersistentReservation(field, spec, config)...)
 	causes = append(causes, validatePersistentState(field, spec, config)...)
 	causes = append(causes, validateDownwardMetrics(field, spec, config)...)
+	causes = append(causes, validateFilesystemsWithVirtIOFSEnabled(field, spec, config)...)
 
+	return causes
+}
+
+func validateFilesystemsWithVirtIOFSEnabled(field *k8sfield.Path, spec *v1.VirtualMachineInstanceSpec, config *virtconfig.ClusterConfig) (causes []metav1.StatusCause) {
+	if spec.Domain.Devices.Filesystems != nil && len(spec.Domain.Devices.Filesystems) > 0 && !config.VirtiofsEnabled() {
+		causes = append(causes, metav1.StatusCause{
+			Type:    metav1.CauseTypeFieldValueInvalid,
+			Message: "virtiofs is not allowed: virtiofs feature gate is not enabled",
+			Field:   field.Child("domain", "devices", "filesystems").String(),
+		})
+	}
 	return causes
 }
 

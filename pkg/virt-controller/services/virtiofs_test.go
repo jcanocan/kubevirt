@@ -47,13 +47,17 @@ var _ = Describe("virtiofs container", func() {
 		testutils.UpdateFakeKubeVirtClusterConfig(kvInformer, kv)
 	}
 
+	BeforeEach(func() {
+		enableFeatureGate(virtconfig.VirtIOFSGate)
+	})
+
 	AfterEach(func() {
 		disableFeatureGates()
 	})
 
 	DescribeTable("virtiofs privileged container", func(shouldEnableFeatureGate bool) {
 		if shouldEnableFeatureGate {
-			enableFeatureGate(virtconfig.VirtIOFSGate)
+			enableFeatureGate(virtconfig.Root)
 		}
 
 		vmi := api.NewMinimalVMI("testvm")

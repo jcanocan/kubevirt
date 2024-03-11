@@ -2050,6 +2050,68 @@ var _ = Describe("Validating VMICreate Admitter", func() {
 			causes := ValidateVirtualMachineInstanceSpec(k8sfield.NewPath("fake"), &vmi.Spec, config)
 			Expect(causes).To(BeEmpty())
 		})
+
+		It("should reject privileged virtiofs filesystems when feature gate is disabled", func() {
+			vmi := api.NewMinimalVMI("testvm")
+			guestMemory := resource.MustParse("64Mi")
+
+			vmi.Spec.Domain.Resources.Requests = k8sv1.ResourceList{
+				k8sv1.ResourceMemory: resource.MustParse("64Mi"),
+			}
+			vmi.Spec.Domain.Memory = &v1.Memory{
+				Hugepages: &v1.Hugepages{},
+				Guest:     &guestMemory,
+			}
+			vmi.Spec.Domain.Memory.Hugepages.PageSize = "2Mi"
+			vmi.Spec.Domain.Devices.Filesystems = []v1.Filesystem{
+				{
+					Name:     "sharedtestdisk",
+					Virtiofs: &v1.FilesystemVirtiofs{},
+				},
+			}
+			vmi.Spec.Volumes = append(vmi.Spec.Volumes, v1.Volume{
+				Name: "sharedtestdisk",
+				VolumeSource: v1.VolumeSource{
+					PersistentVolumeClaim: testutils.NewFakePersistentVolumeSource(),
+				},
+			})
+
+			causes := ValidateVirtualMachineInstanceSpec(k8sfield.NewPath("fake"), &vmi.Spec, config)
+			Expect(causes).To(HaveLen(1))
+			Expect(causes[0].Field).To(Equal("fake.domain.devices.filesystems"))
+		})
+
+		It("should allow privileged virtiofs filesystems when feature gate is enabled", func() {
+			enableFeatureGate(virtconfig.VirtIOFSGate)
+			vmi := api.NewMinimalVMI("testvm")
+			guestMemory := resource.MustParse("64Mi")
+
+			vmi.Spec.Domain.Resources.Requests = k8sv1.ResourceList{
+				k8sv1.ResourceMemory: resource.MustParse("64Mi"),
+			}
+			vmi.Spec.Domain.Memory = &v1.Memory{Guest: &guestMemory}
+			vmi.Spec.Domain.Memory = &v1.Memory{
+				Hugepages: &v1.Hugepages{},
+				Guest:     &guestMemory,
+			}
+			vmi.Spec.Domain.Memory.Hugepages.PageSize = "2Mi"
+			vmi.Spec.Domain.Devices.Filesystems = []v1.Filesystem{
+				{
+					Name:     "sharedtestdisk",
+					Virtiofs: &v1.FilesystemVirtiofs{},
+				},
+			}
+			vmi.Spec.Volumes = append(vmi.Spec.Volumes, v1.Volume{
+				Name: "sharedtestdisk",
+				VolumeSource: v1.VolumeSource{
+					PersistentVolumeClaim: testutils.NewFakePersistentVolumeSource(),
+				},
+			})
+
+			causes := ValidateVirtualMachineInstanceSpec(k8sfield.NewPath("fake"), &vmi.Spec, config)
+			Expect(causes).To(BeEmpty())
+		})
+
 		It("should reject host devices when feature gate is disabled", func() {
 			vmi := api.NewMinimalVMI("testvm")
 			vmi.Spec.Domain.Devices.HostDevices = []v1.HostDevice{
