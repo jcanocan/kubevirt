@@ -191,7 +191,7 @@ container_image(
             ":passwd-tar",
             ":nsswitch-tar",
             ":qemu-kvm-modules-dir-tar",
-	    ":custom-virtiofsd-build",
+            ":custom-virtiofsd-build",
             "//rpm:launcherbase_x86_64",
         ],
     }),

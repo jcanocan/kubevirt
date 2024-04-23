@@ -168,7 +168,10 @@ func generateContainerFromVolume(config *virtconfig.ClusterConfig, volume *v1.Vo
 	}
 
 	sandboxArg := fmt.Sprintf("--sandbox=%s", sandbox)
+	ignoreTempFilesArg := fmt.Sprintf("--migration-on-error=guest-error")
+
 	args = append(args, sandboxArg)
+	args = append(args, ignoreTempFilesArg)
 
 	volumeMounts := []k8sv1.VolumeMount{
 		// This is required to pass socket to compute

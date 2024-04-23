@@ -45,7 +45,7 @@ rules_proto_toolchains()
 http_file(
     name = "custom-virtiofsd",
     downloaded_file_path = "virtiofsd",
-    sha256 = "656c8c9644383793d8a69d7981331c2dd2b0261c4028e6299fd1634c1349ea0a",
+    sha256 = "1955350ce2a6aa99c5c00f82c49da24bd3f7aa6980dda7d383f1f7b38a339345",
     urls = [
 	    "file:///root/go/src/kubevirt.io/kubevirt/build/virtiofsd",
     ],
