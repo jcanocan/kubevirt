@@ -52,6 +52,7 @@ import (
 	"kubevirt.io/kubevirt/pkg/certificates/triple"
 	"kubevirt.io/kubevirt/pkg/certificates/triple/cert"
 	"kubevirt.io/kubevirt/pkg/controller"
+	apimetrics "kubevirt.io/kubevirt/pkg/downwardmetrics/vhostmd/api"
 	"kubevirt.io/kubevirt/pkg/libvmi"
 	libvmici "kubevirt.io/kubevirt/pkg/libvmi/cloudinit"
 	"kubevirt.io/kubevirt/pkg/pointer"
@@ -467,45 +468,6 @@ var _ = SIGMigrationDescribe("VM Live Migration", func() {
 				}, 20*time.Second, 1*time.Second).Should(Equal(v1.LiveMigration), "migration method is expected to be Live Migration")
 			})
 
-			DescribeTable("should migrate with a downwardMetrics", func(via libvmi.Option, metricsGetter libinfra.MetricsGetter) {
-				vmi := libvmifact.NewFedora(
-					libvmi.WithInterface(libvmi.InterfaceDeviceWithMasqueradeBinding()),
-					libvmi.WithNetwork(v1.DefaultPodNetwork()),
-					via,
-				)
-				vmi = libvmops.RunVMIAndExpectLaunch(vmi, 180)
-				Expect(console.LoginToFedora(vmi)).To(Succeed())
-
-				By("starting the migration")
-				migration := libmigration.New(vmi.Name, vmi.Namespace)
-				migration = libmigration.RunMigrationAndExpectToCompleteWithDefaultTimeout(virtClient, migration)
-
-				libmigration.ConfirmVMIPostMigration(virtClient, vmi, migration)
-
-				By("checking if the metrics are still updated after the migration")
-				Eventually(func() error {
-					_, err := metricsGetter(vmi)
-					return err
-				}, 20*time.Second, 1*time.Second).ShouldNot(HaveOccurred())
-				metrics, err := metricsGetter(vmi)
-				Expect(err).ToNot(HaveOccurred())
-				timestamp := libinfra.GetTimeFromMetrics(metrics)
-				Eventually(func() int {
-					metrics, err := metricsGetter(vmi)
-					Expect(err).ToNot(HaveOccurred())
-					return libinfra.GetTimeFromMetrics(metrics)
-				}, 10*time.Second, 1*time.Second).ShouldNot(Equal(timestamp))
-
-				By("checking that the new nodename is reflected in the downward metrics")
-				vmi, err = virtClient.VirtualMachineInstance(vmi.Namespace).Get(context.Background(), vmi.Name, metav1.GetOptions{})
-				Expect(err).ToNot(HaveOccurred())
-				Expect(libinfra.GetHostnameFromMetrics(metrics)).To(Equal(vmi.Status.NodeName))
-
-			},
-				Entry("[test_id:6971]disk", libvmi.WithDownwardMetricsVolume("vhostmd"), libinfra.GetDownwardMetricsDisk),
-				Entry("channel", libvmi.WithDownwardMetricsChannel(), libinfra.GetDownwardMetricsVirtio),
-			)
-
 			It("[test_id:6842]should migrate with TSC frequency set", decorators.Invtsc, decorators.TscFrequencies, func() {
 				vmi := libvmifact.NewAlpine(
 					libvmi.WithInterface(libvmi.InterfaceDeviceWithMasqueradeBinding()),
@@ -750,6 +712,95 @@ var _ = SIGMigrationDescribe("VM Live Migration", func() {
 				Expect(err).ToNot(HaveOccurred(), "Should get domain state successfully")
 				Expect(isPaused).To(BeFalse(), "The VMI should be running, but it is not.")
 			})
+		})
+
+		Context("[Serial] with downwardMetrics", Serial, func() {
+			BeforeEach(func() {
+				kvconfig.EnableDownwardMetrics(virtClient)
+			})
+
+			AfterEach(func() {
+				kvconfig.DisableDownwardMetrics(virtClient)
+			})
+
+			It("should be able to live migrate even if the downwardMetrics feature is disabled", func() {
+				vmi := libvmifact.NewFedora(
+					libvmi.WithInterface(libvmi.InterfaceDeviceWithMasqueradeBinding()),
+					libvmi.WithNetwork(v1.DefaultPodNetwork()),
+					libvmi.WithDownwardMetricsChannel(),
+				)
+				vmi = libvmops.RunVMIAndExpectLaunch(vmi, 180)
+				Expect(console.LoginToFedora(vmi)).To(Succeed())
+
+				By("disabling downwardMetrics feature")
+				kvconfig.DisableDownwardMetrics(virtClient)
+
+				By("starting the migration")
+				migration := libmigration.New(vmi.Name, vmi.Namespace)
+				migration = libmigration.RunMigrationAndExpectToCompleteWithDefaultTimeout(virtClient, migration)
+
+				libmigration.ConfirmVMIPostMigration(virtClient, vmi, migration)
+
+				By("checking if the metrics are still updated after the migration")
+				var metrics *apimetrics.Metrics
+				Eventually(func() error {
+					metrics, err = libinfra.GetDownwardMetricsVirtio(vmi)
+					return err
+				}, 20*time.Second, 1*time.Second).ShouldNot(HaveOccurred())
+
+				timestamp := libinfra.GetTimeFromMetrics(metrics)
+
+				Eventually(func() int {
+					metrics, err = libinfra.GetDownwardMetricsVirtio(vmi)
+					Expect(err).ToNot(HaveOccurred())
+					return libinfra.GetTimeFromMetrics(metrics)
+				}, 10*time.Second, 1*time.Second).ShouldNot(Equal(timestamp))
+
+				By("checking that the new nodename is reflected in the downward metrics")
+				vmi, err = virtClient.VirtualMachineInstance(vmi.Namespace).Get(context.Background(), vmi.Name, metav1.GetOptions{})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(libinfra.GetHostnameFromMetrics(metrics)).To(Equal(vmi.Status.NodeName))
+			})
+
+			DescribeTable("should migrate with a downwardMetrics", func(via libvmi.Option, metricsGetter libinfra.MetricsGetter) {
+				vmi := libvmifact.NewFedora(
+					libvmi.WithInterface(libvmi.InterfaceDeviceWithMasqueradeBinding()),
+					libvmi.WithNetwork(v1.DefaultPodNetwork()),
+					via,
+				)
+				vmi = libvmops.RunVMIAndExpectLaunch(vmi, 180)
+				Expect(console.LoginToFedora(vmi)).To(Succeed())
+
+				By("starting the migration")
+				migration := libmigration.New(vmi.Name, vmi.Namespace)
+				migration = libmigration.RunMigrationAndExpectToCompleteWithDefaultTimeout(virtClient, migration)
+
+				libmigration.ConfirmVMIPostMigration(virtClient, vmi, migration)
+
+				By("checking if the metrics are still updated after the migration")
+				var metrics *apimetrics.Metrics
+				Eventually(func() error {
+					metrics, err = metricsGetter(vmi)
+					return err
+				}, 20*time.Second, 1*time.Second).ShouldNot(HaveOccurred())
+
+				timestamp := libinfra.GetTimeFromMetrics(metrics)
+
+				Eventually(func() int {
+					metrics, err = metricsGetter(vmi)
+					Expect(err).ToNot(HaveOccurred())
+					return libinfra.GetTimeFromMetrics(metrics)
+				}, 10*time.Second, 1*time.Second).ShouldNot(Equal(timestamp))
+
+				By("checking that the new nodename is reflected in the downward metrics")
+				vmi, err = virtClient.VirtualMachineInstance(vmi.Namespace).Get(context.Background(), vmi.Name, metav1.GetOptions{})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(libinfra.GetHostnameFromMetrics(metrics)).To(Equal(vmi.Status.NodeName))
+
+			},
+				Entry("[test_id:6971]disk", libvmi.WithDownwardMetricsVolume("vhostmd"), libinfra.GetDownwardMetricsDisk),
+				Entry("channel", libvmi.WithDownwardMetricsChannel(), libinfra.GetDownwardMetricsVirtio),
+			)
 		})
 
 		Context("with an pending target pod", func() {
