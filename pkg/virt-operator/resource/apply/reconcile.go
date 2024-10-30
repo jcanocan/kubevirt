@@ -49,6 +49,7 @@ import (
 	"kubevirt.io/kubevirt/pkg/certificates/triple/cert"
 	"kubevirt.io/kubevirt/pkg/controller"
 	virtconfig "kubevirt.io/kubevirt/pkg/virt-config"
+	"kubevirt.io/kubevirt/pkg/virt-operator/resource/generate/components"
 	"kubevirt.io/kubevirt/pkg/virt-operator/resource/generate/install"
 	"kubevirt.io/kubevirt/pkg/virt-operator/util"
 )
@@ -626,12 +627,17 @@ func (r *Reconciler) Sync(queue workqueue.RateLimitingInterface) (bool, error) {
 		return false, nil
 	}
 
-	err = r.createOrUpdateValidatingAdmissionPolicyBindings()
+	err = r.createDownwardMetricsConfigMap(findRequiredCAConfigMap(components.DownwardMetricsAllowedListConfigMap, r.targetStrategy.ConfigMaps()))
 	if err != nil {
 		return false, err
 	}
 
 	err = r.createOrUpdateValidatingAdmissionPolicies()
+	if err != nil {
+		return false, err
+	}
+
+	err = r.createOrUpdateValidatingAdmissionPolicyBindings()
 	if err != nil {
 		return false, err
 	}

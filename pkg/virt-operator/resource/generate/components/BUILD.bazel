@@ -7,6 +7,7 @@ go_library(
         "crds.go",
         "daemonsets.go",
         "deployments.go",
+        "downwardmetricsconfigmap.go",
         "instancetypes.go",
         "prometheus.go",
         "routes.go",

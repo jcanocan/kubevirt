@@ -610,6 +610,30 @@ func (r *Reconciler) createOrUpdateKubeVirtCAConfigMap(queue workqueue.RateLimit
 	return []byte(configMap.Data[components.CABundleKey]), nil
 }
 
+func (r *Reconciler) createDownwardMetricsConfigMap(configMap *corev1.ConfigMap) error {
+	if configMap == nil {
+		return nil
+	}
+	log.DefaultLogger().V(4).Infof("checking downwardMetrics config map %s", configMap.Name)
+
+	version, imageRegistry, id := getTargetVersionRegistryID(r.kv)
+	injectOperatorMetadata(r.kv, &configMap.ObjectMeta, version, imageRegistry, id, true)
+
+	_, exists, _ := r.stores.ConfigMapCache.Get(configMap)
+
+	if !exists {
+		r.expectations.ConfigMap.RaiseExpectations(r.kvKey, 1, 0)
+		_, err := r.clientset.CoreV1().ConfigMaps(configMap.Namespace).Create(context.Background(), configMap, metav1.CreateOptions{})
+		if err != nil {
+			r.expectations.ConfigMap.LowerExpectations(r.kvKey, 1, 0)
+			return fmt.Errorf("unable to create downwardMetrics config map %+v: %v", configMap, err)
+		}
+	}
+
+	//FIXME: should makes sure that the allowedServiceAccounts are not removed and update the metadata if required, eg generation
+	return nil
+}
+
 func createConfigMapPatch(configMap *corev1.ConfigMap) ([]byte, error) {
 	// Add Labels and Annotations Patches
 	ops := createLabelsAndAnnotationsPatch(&configMap.ObjectMeta)

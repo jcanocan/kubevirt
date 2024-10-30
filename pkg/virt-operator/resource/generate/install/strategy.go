@@ -600,6 +600,11 @@ func GenerateCurrentInstallStrategy(config *operatorutil.KubeVirtDeploymentConfi
 	virtHandlerServiceAccount := getVirtHandlerServiceAccount(config.GetNamespace())
 	strategy.validatingAdmissionPolicies = append(strategy.validatingAdmissionPolicies, components.NewHandlerV1ValidatingAdmissionPolicy(virtHandlerServiceAccount))
 
+	strategy.validatingAdmissionPolicyBindings = append(strategy.validatingAdmissionPolicyBindings, components.NewDownwardMetricsValidationAdmissionPolicyBinding(config.GetNamespace()))
+	strategy.validatingAdmissionPolicies = append(strategy.validatingAdmissionPolicies, components.NewDownwardMetricsValidatingAdmissionPolicy())
+
+	strategy.configMaps = append(strategy.configMaps, components.NewDownwardMetricsConfigMap(operatorNamespace)...)
+
 	instancetypes, err := components.NewClusterInstancetypes()
 	if err != nil {
 		return nil, fmt.Errorf("error generating instancetypes for environment %v", err)
