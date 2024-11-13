@@ -599,6 +599,8 @@ func GenerateCurrentInstallStrategy(config *operatorutil.KubeVirtDeploymentConfi
 	strategy.validatingAdmissionPolicyBindings = append(strategy.validatingAdmissionPolicyBindings, components.NewHandlerV1ValidatingAdmissionPolicyBinding())
 	virtHandlerServiceAccount := getVirtHandlerServiceAccount(config.GetNamespace())
 	strategy.validatingAdmissionPolicies = append(strategy.validatingAdmissionPolicies, components.NewHandlerV1ValidatingAdmissionPolicy(virtHandlerServiceAccount))
+	strategy.validatingAdmissionPolicyBindings = append(strategy.validatingAdmissionPolicyBindings, components.NewVMDeleteProtectionValidatingAdmissionPolicyBinding())
+	strategy.validatingAdmissionPolicies = append(strategy.validatingAdmissionPolicies, components.NewVMDeleteProtectionValidatingAdmissionPolicy())
 
 	instancetypes, err := components.NewClusterInstancetypes()
 	if err != nil {

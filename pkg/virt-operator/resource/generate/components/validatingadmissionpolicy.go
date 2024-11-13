@@ -31,9 +31,12 @@ import (
 )
 
 const (
-	validatingAdmissionPolicyBindingName = "kubevirt-node-restriction-binding"
-	validatingAdmissionPolicyName        = "kubevirt-node-restriction-policy"
-	nodeRestrictionAppLabelValue         = "kubevirt-node-restriction"
+	validatingAdmissionPolicyBindingName            = "kubevirt-node-restriction-binding"
+	validatingAdmissionPolicyName                   = "kubevirt-node-restriction-policy"
+	nodeRestrictionAppLabelValue                    = "kubevirt-node-restriction"
+	virtualMachineDeleteProtectionAppLabelValue     = "kubevirt-vm-deletion-protection"
+	virtualMachineDeleteProtectionPolicyName        = "kubevirt-vm-deletion-protection-policy"
+	virtualMachineDeleteProtectionPolicyBindingName = "kubevirt-vm-deletion-protection-binding"
 
 	NodeRestrictionErrModifySpec           = "this user cannot modify spec of node"
 	NodeRestrictionErrChangeMetadataFields = "this user can only change allowed metadata fields"
@@ -173,6 +176,71 @@ func NewHandlerV1ValidatingAdmissionPolicy(virtHandlerServiceAccount string) *ad
 					Expression: `variables.newNonKubevirtAnnotations.all(k, k in variables.oldNonKubevirtAnnotations && variables.newAnnotations[k] == variables.oldAnnotations[k])`,
 					Message:    NodeRestrictionErrUpdateAnnotations,
 				},
+			},
+		},
+	}
+}
+
+func NewVMDeleteProtectionValidatingAdmissionPolicy() *admissionregistrationv1.ValidatingAdmissionPolicy {
+	return &admissionregistrationv1.ValidatingAdmissionPolicy{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ValidatingAdmissionPolicy",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: virtualMachineDeleteProtectionPolicyName,
+		},
+		Spec: admissionregistrationv1.ValidatingAdmissionPolicySpec{
+			FailurePolicy: pointer.P(admissionregistrationv1.Fail),
+			MatchConstraints: &admissionregistrationv1.MatchResources{
+				ResourceRules: []admissionregistrationv1.NamedRuleWithOperations{
+					{
+						RuleWithOperations: admissionregistrationv1.RuleWithOperations{
+							Operations: []admissionregistrationv1.OperationType{
+								admissionregistrationv1.Delete,
+							},
+							Rule: admissionregistrationv1.Rule{
+								APIGroups:   []string{"kubevirt.io"},
+								APIVersions: []string{"*"},
+								Resources:   []string{"virtualmachines"},
+							},
+						},
+					},
+				},
+			},
+			Variables: []admissionregistrationv1.Variable{
+				{
+					Name:       "annotation",
+					Expression: `string('kubevirt.io/vm-delete-protection')`,
+				},
+			},
+			Validations: []admissionregistrationv1.Validation{
+				{
+					Expression: `(!(variables.annotation in oldObject.metadata.annotations) || !oldObject.metadata.annotations[variables.annotation].matches('^(true|True)$'))`,
+					Message:    "Object + string(oldObject.metadata.name) + cannot be deleted, remove delete protection",
+				},
+			},
+		},
+	}
+}
+
+func NewVMDeleteProtectionValidatingAdmissionPolicyBinding() *admissionregistrationv1.ValidatingAdmissionPolicyBinding {
+	return &admissionregistrationv1.ValidatingAdmissionPolicyBinding{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ValidatingAdmissionPolicyBinding",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: virtualMachineDeleteProtectionPolicyBindingName,
+			Labels: map[string]string{
+				v1.AppLabel:       virtualMachineDeleteProtectionAppLabelValue,
+				v1.ManagedByLabel: v1.ManagedByLabelOperatorValue,
+			},
+		},
+		Spec: admissionregistrationv1.ValidatingAdmissionPolicyBindingSpec{
+			PolicyName: virtualMachineDeleteProtectionPolicyName,
+			ValidationActions: []admissionregistrationv1.ValidationAction{
+				admissionregistrationv1.Deny,
 			},
 		},
 	}

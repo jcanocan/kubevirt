@@ -870,6 +870,10 @@ const (
 	MigrationJobNameAnnotation                    string = "kubevirt.io/migrationJobName"
 	ControllerAPILatestVersionObservedAnnotation  string = "kubevirt.io/latest-observed-api-version"
 	ControllerAPIStorageVersionObservedAnnotation string = "kubevirt.io/storage-observed-api-version"
+
+	// Used by VM delete protection, it prevents users to accidentally delete VMs, VMIs or launcher pods
+	VMDeleteProtection string = AppLabel + "/vm-delete-protection"
+
 	// Used by functional tests to force a VMI to fail the migration internally within launcher
 	FuncTestForceLauncherMigrationFailureAnnotation string = "kubevirt.io/func-test-force-launcher-migration-failure"
 	// Used by functional tests to prevent virt launcher from finishing the target pod preparation.
