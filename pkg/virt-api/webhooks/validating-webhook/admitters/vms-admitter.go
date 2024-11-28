@@ -81,15 +81,27 @@ func (admitter *VMsAdmitter) Admit(ctx context.Context, ar *admissionv1.Admissio
 		return webhookutils.ToAdmissionResponseError(err)
 	}
 
-	if resp := webhookutils.ValidateSchema(v1.VirtualMachineGroupVersionKind, ar.Request.Object.Raw); resp != nil {
+	var rawObject []byte
+
+	if ar.Request.Operation != admissionv1.Delete {
+		rawObject = ar.Request.Object.Raw
+	} else {
+		rawObject = ar.Request.OldObject.Raw
+	}
+
+	if resp := webhookutils.ValidateSchema(v1.VirtualMachineGroupVersionKind, rawObject); resp != nil {
 		return resp
 	}
 
-	raw := ar.Request.Object.Raw
+	causes := validateDeletion(ar.Request)
+	if len(causes) > 0 {
+		return webhookutils.ToAdmissionResponse(causes)
+	}
+
 	accountName := ar.Request.UserInfo.Username
 	vm := v1.VirtualMachine{}
 
-	err := json.Unmarshal(raw, &vm)
+	err := json.Unmarshal(rawObject, &vm)
 	if err != nil {
 		return webhookutils.ToAdmissionResponseError(err)
 	}
@@ -181,6 +193,35 @@ func (admitter *VMsAdmitter) Admit(ctx context.Context, ar *admissionv1.Admissio
 		Allowed:  true,
 		Warnings: warnings,
 	}
+}
+
+func validateDeletion(ar *admissionv1.AdmissionRequest) []metav1.StatusCause {
+	if ar.Operation == admissionv1.Delete {
+		oldVM := &v1.VirtualMachine{}
+		if err := json.Unmarshal(ar.OldObject.Raw, oldVM); err != nil {
+			return []metav1.StatusCause{{
+				Type:    metav1.CauseTypeUnexpectedServerResponse,
+				Message: "Could not fetch old VM",
+			}}
+		}
+
+		value, ok := oldVM.Annotations["kubevirt.io/vm-delete-protection"]
+
+		if !ok {
+			return nil
+		}
+
+		if value == "true" || value == "True" {
+			return []metav1.StatusCause{
+				{
+					Type:    metav1.CauseTypeInternal,
+					Message: "VM protected against deletion",
+					Field:   k8sfield.NewPath("spec", "annotations", "kubevirt.io/vm-delete-protection").String(),
+				},
+			}
+		}
+	}
+	return nil
 }
 
 func (admitter *VMsAdmitter) AdmitStatus(ctx context.Context, ar *admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
