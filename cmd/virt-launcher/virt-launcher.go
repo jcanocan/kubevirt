@@ -21,6 +21,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	goflag "flag"
 	"fmt"
 	"os"
@@ -44,6 +45,7 @@ import (
 	"kubevirt.io/kubevirt/pkg/config"
 	containerdisk "kubevirt.io/kubevirt/pkg/container-disk"
 	"kubevirt.io/kubevirt/pkg/downwardmetrics"
+	virtioserial "kubevirt.io/kubevirt/pkg/downwardmetrics/virtio-serial"
 	ephemeraldisk "kubevirt.io/kubevirt/pkg/ephemeral-disk"
 	"kubevirt.io/kubevirt/pkg/hooks"
 	hotplugdisk "kubevirt.io/kubevirt/pkg/hotplug-disk"
@@ -334,6 +336,21 @@ func waitForFinalNotify(deleteNotificationSent chan watch.Event,
 	}
 }
 
+func runDownwardMetricsVirtioServer(ctx context.Context) error {
+	if _, ok := os.LookupEnv("VIRT_LAUNCHER_DOWNWARDMETRICS_SERVER"); ok {
+		nodeName, ok := os.LookupEnv("NODE_NAME")
+		if !ok {
+			return errors.New("NODE_NAME environment variable not found")
+		}
+
+		err := virtioserial.RunDownwardMetricsVirtioServer(ctx, nodeName, downwardmetrics.DownwardMetricsChannelSocket)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func main() {
 	qemuTimeout := pflag.Duration("qemu-timeout", defaultStartTimeout, "Amount of time to wait for qemu")
 	virtShareDir := pflag.String("kubevirt-share-dir", "/var/run/kubevirt", "Shared directory between virt-handler and virt-launcher")
@@ -469,10 +486,13 @@ func main() {
 	)
 
 	signalStopChan := make(chan struct{})
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
 	go func() {
 		s := <-c
 		log.Log.Infof("Received signal %s", s.String())
 		close(signalStopChan)
+		cancelCtx()
 	}()
 
 	// Marking Ready allows the container's readiness check to pass.
@@ -494,6 +514,10 @@ func main() {
 			finalShutdownCallback,
 			gracefulShutdownCallback)
 
+		if err := runDownwardMetricsVirtioServer(ctx); err != nil {
+			log.Log.Reason(err).Error("failed to start the DownwardMetrics server")
+			cancelCtx()
+		}
 		// This is a wait loop that monitors the qemu pid. When the pid
 		// exits, the wait loop breaks.
 		mon.RunForever(*qemuTimeout, signalStopChan)
